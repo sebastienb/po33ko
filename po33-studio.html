@@ -514,6 +514,7 @@ function updatePadLabels(){
 function buildPads(){pads.innerHTML="";slots.forEach((s,i)=>{const p=document.createElement("button");p.className="pad "+(i<8?"melodic":"drum")+(i===selSlot?" sel":"");
   p.innerHTML="<b>"+(i+1)+"</b><small>"+padSmallLabel(i)+"</small>";
   p.setAttribute("aria-label","Play "+padDescriptor(selSlot,i)+" from "+slots[selSlot].name);
+  p.setAttribute("aria-keyshortcuts",PAD_KEY_LABELS[i]);
   p.addEventListener("pointerdown",e=>handleSoundKeyDown(e,i));
   p.addEventListener("pointerup",e=>handleSoundKeyUp(e,i));
   p.addEventListener("pointercancel",e=>handleSoundKeyUp(e,i));
@@ -539,7 +540,7 @@ document.getElementById("copyPat").addEventListener("click",()=>{const tgt=(curP
 function updateLcd(){lcdSlot.textContent=slots[selSlot].name;lcdBpm.textContent=bpm;lcdPat.textContent=LET[curPat];}
 
 /* ===== multitouch hardware combos ===== */
-const heldFns=new Set(),heldPointerToFn=new Map(),heldFnUsed=new Set(),activeSoundKeyActions=new Map(),activeSoundKeyPads=new Map();
+const heldFns=new Set(),heldPointerToFn=new Map(),heldKeyToFn=new Map(),heldFnUsed=new Set(),activeSoundKeyActions=new Map(),activeSoundKeyPads=new Map();
 const hwButtons={
   sound:document.getElementById("hwSound"),
   pattern:document.getElementById("hwPattern"),
@@ -548,11 +549,25 @@ const hwButtons={
   fx:document.getElementById("hwFx"),
   write:document.getElementById("hwWrite")
 };
+const PAD_KEY_CODES=["Digit1","Digit2","Digit3","Digit4","Digit5","Digit6","Digit7","Digit8","Digit9","Digit0","KeyQ","KeyW","KeyE","KeyR","KeyT","KeyY"];
+const FN_KEY_CODES={KeyS:"sound",KeyP:"pattern",KeyB:"bpm",KeyM:"record",KeyF:"fx",Space:"write"};
+const FN_KEY_LABELS={sound:"S",pattern:"P",bpm:"B",record:"M",fx:"F",write:"Space"};
+const PAD_KEY_LABELS=["1","2","3","4","5","6","7","8","9","0","Q","W","E","R","T","Y"];
+const fnTapActions={};
 function held(name){return heldFns.has(name);}
 function markHeldUsed(name){heldFnUsed.add(name);}
 function firstHeld(...names){return names.find(n=>held(n));}
+function hasHeldFnSource(fn,skipCode){
+  for(const f of heldPointerToFn.values())if(f===fn)return true;
+  for(const [code,f] of heldKeyToFn)if(code!==skipCode&&f===fn)return true;
+  return false;
+}
+function setFnVisual(fn,on){const btn=hwButtons[fn];if(btn)btn.classList.toggle("holding",on);if(fn==="sound")updatePadLabels();}
+function ignoreShortcutTarget(e){const tag=(e.target&&e.target.tagName||"").toLowerCase();return tag==="input"||tag==="textarea"||tag==="select"||e.isComposing||e.metaKey||e.ctrlKey;}
 function bindHoldButton(name,onTap){
+  fnTapActions[name]=onTap;
   const btn=hwButtons[name];if(!btn)return;
+  if(FN_KEY_LABELS[name])btn.setAttribute("aria-keyshortcuts",FN_KEY_LABELS[name]);
   function suppressNextClick(){btn.dataset.skipClick="1";setTimeout(()=>{delete btn.dataset.skipClick;},450);}
   btn.addEventListener("pointerdown",e=>{
     e.preventDefault();try{btn.setPointerCapture(e.pointerId);}catch(_){}
@@ -617,8 +632,7 @@ function selectSoundSlot(i){
   selSlot=i;selectSlot();flashPad(i);
   setStatus("sound "+(i+1)+" selected: "+slots[i].name+" ("+(isMelodicSlot(i)?"melodic":"drum")+" slot)");
 }
-function handleSoundKeyDown(e,i){
-  e.preventDefault();const pad=pads.children[i];try{pad.setPointerCapture(e.pointerId);}catch(_){}
+function startSoundKeyAction(id,i,pad){
   pad.classList.add("holding");ensure();
   const combo=firstHeld("record","fx","pattern","bpm","write","sound");
   let action={type:"tap"};
@@ -640,7 +654,11 @@ function handleSoundKeyDown(e,i){
       if(writeMode){toggleStep(i);action={type:"step"};}
       else{playNumberKey(i);action={type:"play"};}
   }
-  activeSoundKeyActions.set(e.pointerId,action);activeSoundKeyPads.set(e.pointerId,pad);
+  activeSoundKeyActions.set(id,action);activeSoundKeyPads.set(id,pad);
+}
+function handleSoundKeyDown(e,i){
+  e.preventDefault();const pad=pads.children[i];try{pad.setPointerCapture(e.pointerId);}catch(_){}
+  startSoundKeyAction(e.pointerId,i,pad);
 }
 function finishSoundKeyPointer(pointerId){
   const pad=activeSoundKeyPads.get(pointerId);if(pad)pad.classList.remove("holding");
@@ -654,6 +672,41 @@ function releaseHeldFnPointer(pointerId){
   const fn=heldPointerToFn.get(pointerId);
   if(fn&&hwButtons[fn]){heldPointerToFn.delete(pointerId);heldFns.delete(fn);hwButtons[fn].classList.remove("holding");heldFnUsed.delete(fn);if(fn==="sound")updatePadLabels();}
 }
+function startKeyboardFn(code,fn){
+  if(heldKeyToFn.has(code))return;
+  heldKeyToFn.set(code,fn);heldFns.add(fn);heldFnUsed.delete(fn);setFnVisual(fn,true);
+}
+function finishKeyboardFn(code){
+  const fn=heldKeyToFn.get(code);if(!fn)return;
+  heldKeyToFn.delete(code);
+  if(!hasHeldFnSource(fn,code)){
+    heldFns.delete(fn);setFnVisual(fn,false);
+    if(!heldFnUsed.has(fn)&&fnTapActions[fn])fnTapActions[fn]();
+    heldFnUsed.delete(fn);
+  }
+}
+function startKeyboardPad(code,i){
+  const id="kb:"+code;if(activeSoundKeyActions.has(id))return;
+  const pad=pads.children[i];if(!pad)return;
+  startSoundKeyAction(id,i,pad);
+}
+function finishKeyboardPad(code){finishSoundKeyPointer("kb:"+code);}
+window.addEventListener("keydown",e=>{
+  if(ignoreShortcutTarget(e))return;
+  const fn=FN_KEY_CODES[e.code],padIdx=PAD_KEY_CODES.indexOf(e.code);
+  if(!fn&&padIdx<0)return;
+  e.preventDefault();e.stopImmediatePropagation();
+  if(e.repeat)return;
+  if(fn){startKeyboardFn(e.code,fn);return;}
+  startKeyboardPad(e.code,padIdx);
+});
+window.addEventListener("keyup",e=>{
+  const fn=FN_KEY_CODES[e.code],padIdx=PAD_KEY_CODES.indexOf(e.code);
+  if(!fn&&padIdx<0)return;
+  e.preventDefault();e.stopImmediatePropagation();
+  if(fn)finishKeyboardFn(e.code);
+  if(padIdx>=0)finishKeyboardPad(e.code);
+});
 document.addEventListener("pointerup",e=>{
   const fn=heldPointerToFn.get(e.pointerId);
   if(fn)releaseHeldFnPointer(e.pointerId);
