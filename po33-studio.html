@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Sampler &amp; Synth — Studio</title>
 <link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="data:,">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&family=Pixelify+Sans:wght@400;700&display=swap" rel="stylesheet">
@@ -403,10 +404,15 @@ function vHat(d,t,f){const c=ac();const n=c.createBufferSource();n.buffer=noiseB
 function vClap(d,t){const c=ac();[0,0.012,0.024].forEach(off=>{const n=c.createBufferSource();n.buffer=noiseBuf(0.11);const bp=c.createBiquadFilter();bp.type="bandpass";bp.frequency.value=1300;bp.Q.value=1.2;const g=c.createGain();const tt=t+off;g.gain.setValueAtTime(0.0001,tt);g.gain.linearRampToValueAtTime(0.36,tt+0.001);g.gain.exponentialRampToValueAtTime(0.001,tt+0.09);n.connect(bp).connect(g).connect(d);n.start(tt);n.stop(tt+0.11);});}
 function vTom(d,t,f){const c=ac(),o=c.createOscillator(),g=c.createGain();o.type="sine";o.frequency.setValueAtTime(190*f,t);o.frequency.exponentialRampToValueAtTime(95*f,t+0.2);g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.7,t+0.005);g.gain.exponentialRampToValueAtTime(0.001,t+0.3);o.connect(g).connect(d);o.start(t);o.stop(t+0.32);}
 function vTone(d,t,f,s){const c=ac(),o=c.createOscillator(),lp=c.createBiquadFilter(),g=c.createGain();o.type=s.wave;o.frequency.value=s.base*f;lp.type="lowpass";lp.frequency.value=s.cutoff;const a=s.atk,r=s.rel;g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.5,t+a);g.gain.exponentialRampToValueAtTime(0.0008,t+a+r);o.connect(lp).connect(g).connect(d);o.start(t);o.stop(t+a+r+0.05);}
-function vSample(d,t,f,s){if(!s.buffer)return;const c=ac(),src=c.createBufferSource();src.buffer=s.buffer;src.playbackRate.value=f*s.base;const dur=s.buffer.duration,off=s.trimS*dur,len=(s.trimE-s.trimS)*dur,rate=src.playbackRate.value,pd=len/rate;const g=c.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.9,t+0.004);g.gain.setValueAtTime(0.9,t+Math.max(0.01,pd-0.01));g.gain.linearRampToValueAtTime(0,t+pd);src.connect(g).connect(d);src.start(t,off,len);}
+function vSample(d,t,f,s,slice){if(!s.buffer)return;const c=ac(),src=c.createBufferSource();src.buffer=s.buffer;src.playbackRate.value=f*s.base;
+  const dur=s.buffer.duration,trimS=s.trimS,trimE=s.trimE,span=trimE-trimS;
+  let start=trimS,end=trimE;
+  if(slice!=null){start=trimS+span*(slice/16);end=Math.min(trimE,start+span/16);}
+  const off=start*dur,len=Math.max(0.01,(end-start)*dur),rate=src.playbackRate.value,pd=len/rate;
+  const g=c.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.9,t+0.004);g.gain.setValueAtTime(0.9,t+Math.max(0.01,pd-0.01));g.gain.linearRampToValueAtTime(0,t+pd);src.connect(g).connect(d);src.start(t,off,len);}
 
-function trig(si,t,semi){ensure();const s=slots[si];const f=Math.pow(2,((semi||0)+s.tune)/12);const d=masterIn;
-  switch(s.kind){case"kick":vKick(d,t,f);break;case"snare":vSnare(d,t,f);break;case"hat":vHat(d,t,f);break;case"clap":vClap(d,t);break;case"tom":vTom(d,t,f);break;case"tone":vTone(d,t,f,s);break;case"sample":vSample(d,t,f,s);break;}}
+function trig(si,t,semi,slice){ensure();const s=slots[si];const f=Math.pow(2,((semi||0)+s.tune)/12);const d=masterIn;
+  switch(s.kind){case"kick":vKick(d,t,f);break;case"snare":vSnare(d,t,f);break;case"hat":vHat(d,t,f);break;case"clap":vClap(d,t);break;case"tom":vTom(d,t,f);break;case"tone":vTone(d,t,f,s);break;case"sample":vSample(d,t,f,s,slice);break;}}
 
 /* ===== built-in sample buffers ===== */
 function makeBlip(){const c=ac(),sr=c.sampleRate,len=Math.floor(sr*1.2),b=c.createBuffer(1,len,sr),d=b.getChannelData(0),on=Math.floor(sr*0.15);for(let i=0;i<len;i++){let s=0;if(i>=on){const k=(i-on)/sr,e=Math.exp(-k*7);s=Math.sin(2*Math.PI*220*k)*e*0.7+Math.sin(2*Math.PI*440*k)*e*0.2;if(k<0.004)s+=(Math.random()*2-1)*0.4*(1-k/0.004);}d[i]=s;}return b;}
@@ -432,21 +438,25 @@ const DEFAULTS=[
   {name:"PERC",kind:"tom",tune:5}
 ];
 let slots=DEFAULTS.map(s=>Object.assign({},s));
-function newPattern(){return{grid:Array.from({length:DEFAULTS.length},()=>new Array(16).fill(false)),melSlot:0,mel:new Array(16).fill(null)};}
+function newPattern(){return{grid:Array.from({length:DEFAULTS.length},()=>new Array(16).fill(null)),melSlot:0,mel:new Array(16).fill(null)};}
 let patterns=[newPattern(),newPattern(),newPattern(),newPattern()];
 /* seed pattern A with a beat */
-[0,4,8,12].forEach(i=>patterns[0].grid[8][i]=true);
-[4,12].forEach(i=>patterns[0].grid[9][i]=true);
-[0,2,4,6,8,10,12,14].forEach(i=>patterns[0].grid[10][i]=true);
-let curPat=0,selSlot=8,bpm=90,swing=8,vol=90,writeMode=true;
+[0,4,8,12].forEach(i=>patterns[0].grid[8][i]=0);
+[4,12].forEach(i=>patterns[0].grid[9][i]=0);
+[0,2,4,6,8,10,12,14].forEach(i=>patterns[0].grid[10][i]=0);
+let curPat=0,selSlot=8,bpm=90,swing=8,vol=90,writeMode=false;
 const LET=["A","B","C","D"];
+const PO33_MELODIC_STEPS=[-7,-5,-3,-2,0,2,3,5,7,8,10,11,12,14,15,17];
+const PO33_MELODIC_LABELS=["5th","6th","7th","lead","root","2nd","min3","4th","5th","min6","min7","maj7","oct","9th","min10","11th"];
+const DRUM_SLICE_TUNES=[0,2,4,5,7,9,11,12,-12,-10,-8,-7,-5,-3,-1,0];
+const lastPadBySlot=DEFAULTS.map((_,i)=>i<8?4:0);
 
 /* ===== scheduler ===== */
 const LOOK=25,AHEAD=0.12;
 let playing=false,step=0,nextT=0,timer=null,playChain=null,chainPos=0;const drawQ=[];
 function schedule(){const c=ac(),sd=(60/bpm)/4;
   while(nextT<c.currentTime+AHEAD){const sw=(step%2===1)?(swing/100)*sd:0;const tt=nextT+sw;const p=patterns[curPat];
-    for(let si=0;si<slots.length;si++)if(p.grid[si][step])trig(si,tt,0);
+    for(let si=0;si<slots.length;si++){const ev=p.grid[si][step];if(ev!=null)trigPad(si,ev,tt);}
     if(p.mel[step]!=null)trig(p.melSlot,tt,p.mel[step]);
     drawQ.push({step:step,time:tt,pat:curPat});
     step++;if(step>=16){step=0;if(playChain){chainPos=(chainPos+1)%playChain.length;curPat=playChain[chainPos];refreshPatBtns();repaintSteps();}}
@@ -481,19 +491,39 @@ for(let i=0;i<16;i++){lcdDots.appendChild(document.createElement("i"));}
 for(let i=0;i<16;i++){const s=document.createElement("span");s.textContent=i+1;if(i%4===0)s.className="b";ruler.appendChild(s);}
 
 /* ===== SEQ: pads + steps ===== */
+function isMelodicSlot(i){return i<8;}
+function defaultPadForSlot(i){return isMelodicSlot(i)?4:0;}
+function padDescriptor(si,pad){
+  return isMelodicSlot(si)?"key "+(pad+1)+" "+PO33_MELODIC_LABELS[pad]:"slice "+(pad+1);
+}
+function trigPad(si,pad,t){
+  const melodic=isMelodicSlot(si),semi=melodic?PO33_MELODIC_STEPS[pad]:DRUM_SLICE_TUNES[pad];
+  trig(si,t,semi,melodic?null:pad);
+}
+function padSmallLabel(i){
+  if(held("sound"))return slots[i].name;
+  return isMelodicSlot(selSlot)?PO33_MELODIC_LABELS[i]:"slice "+(i+1);
+}
+function updatePadLabels(){
+  [...pads.children].forEach((p,i)=>{
+    p.classList.toggle("sel",i===selSlot);
+    const sm=p.querySelector("small");if(sm)sm.textContent=padSmallLabel(i);
+    p.setAttribute("aria-label",held("sound")?"Select sound "+(i+1)+": "+slots[i].name:"Play "+padDescriptor(selSlot,i)+" from "+slots[selSlot].name);
+  });
+}
 function buildPads(){pads.innerHTML="";slots.forEach((s,i)=>{const p=document.createElement("button");p.className="pad "+(i<8?"melodic":"drum")+(i===selSlot?" sel":"");
-  p.innerHTML="<b>"+(i+1)+"</b><small>"+s.name+"</small>";
-  p.setAttribute("aria-label","Sound "+(i+1)+": "+s.name);
+  p.innerHTML="<b>"+(i+1)+"</b><small>"+padSmallLabel(i)+"</small>";
+  p.setAttribute("aria-label","Play "+padDescriptor(selSlot,i)+" from "+slots[selSlot].name);
   p.addEventListener("pointerdown",e=>handleSoundKeyDown(e,i));
   p.addEventListener("pointerup",e=>handleSoundKeyUp(e,i));
   p.addEventListener("pointercancel",e=>handleSoundKeyUp(e,i));
   pads.appendChild(p);});}
 function flashPad(i){const p=pads.children[i];if(!p)return;p.classList.add("lit");setTimeout(()=>p.classList.remove("lit"),110);}
 function buildSteps(){steps.innerHTML="";for(let i=0;i<16;i++){const b=document.createElement("button");b.className="stp"+(i%4===0?" beat":"");
-  b.addEventListener("click",()=>{const p=patterns[curPat];if(!writeMode){ensure();trig(selSlot,ac().currentTime+0.01,0);setStatus("write off: auditioning "+slots[selSlot].name);return;}p.grid[selSlot][i]=!p.grid[selSlot][i];b.classList.toggle("on",p.grid[selSlot][i]);if(p.grid[selSlot][i]){ensure();trig(selSlot,ac().currentTime+0.01,0);}});
+  b.addEventListener("click",()=>{if(!writeMode){playNumberKey(lastPadBySlot[selSlot]);setStatus("write off: number keys play; press write to edit steps");return;}toggleStep(i);});
   steps.appendChild(b);}}
-function repaintSteps(){const p=patterns[curPat];for(let i=0;i<16;i++)steps.children[i].classList.toggle("on",p.grid[selSlot][i]);}
-function selectSlot(){[...pads.children].forEach((p,i)=>p.classList.toggle("sel",i===selSlot));
+function repaintSteps(){const p=patterns[curPat];for(let i=0;i<16;i++)steps.children[i].classList.toggle("on",p.grid[selSlot][i]!=null);}
+function selectSlot(){updatePadLabels();
   laneName.textContent=slots[selSlot].name;tuneVal.textContent=(slots[selSlot].tune>0?"+":"")+slots[selSlot].tune;
   repaintSteps();updateLcd();renderEditor();melSlotName.textContent=slots[selSlot].name;}
 /* tune */
@@ -527,16 +557,17 @@ function bindHoldButton(name,onTap){
   btn.addEventListener("pointerdown",e=>{
     e.preventDefault();try{btn.setPointerCapture(e.pointerId);}catch(_){}
     heldFns.add(name);heldPointerToFn.set(e.pointerId,name);heldFnUsed.delete(name);btn.classList.add("holding");
+    if(name==="sound")updatePadLabels();
   });
   function release(e){
     const fn=heldPointerToFn.get(e.pointerId);if(fn!==name)return;
     heldPointerToFn.delete(e.pointerId);heldFns.delete(name);btn.classList.remove("holding");
     if(!heldFnUsed.has(name))onTap();
-    heldFnUsed.delete(name);suppressNextClick();
+    heldFnUsed.delete(name);if(name==="sound")updatePadLabels();suppressNextClick();
   }
   function cancel(e){
     const fn=heldPointerToFn.get(e.pointerId);if(fn!==name)return;
-    heldPointerToFn.delete(e.pointerId);heldFns.delete(name);heldFnUsed.delete(name);btn.classList.remove("holding");suppressNextClick();
+    heldPointerToFn.delete(e.pointerId);heldFns.delete(name);heldFnUsed.delete(name);btn.classList.remove("holding");if(name==="sound")updatePadLabels();suppressNextClick();
   }
   btn.addEventListener("pointerup",release);
   btn.addEventListener("pointercancel",cancel);
@@ -554,13 +585,22 @@ function setVolumeFromKey(i){
   if(mGain)mGain.gain.setTargetAtTime(vol/100,ac().currentTime,0.01);
   rVol();setStatus("volume "+(i+1)+"/16");
 }
+function playNumberKey(i){
+  lastPadBySlot[selSlot]=i;ensure();trigPad(selSlot,i,ac().currentTime+0.01);flashPad(i);
+  setStatus(slots[selSlot].name+" "+padDescriptor(selSlot,i));
+}
+function toggleStep(i,forceOn){
+  const p=patterns[curPat],on=forceOn==null?p.grid[selSlot][i]==null:forceOn;
+  if(on){const pad=lastPadBySlot[selSlot]??defaultPadForSlot(selSlot);p.grid[selSlot][i]=pad;ensure();trigPad(selSlot,pad,ac().currentTime+0.01);setStatus("step "+(i+1)+" on: "+slots[selSlot].name+" "+padDescriptor(selSlot,pad));}
+  else{p.grid[selSlot][i]=null;setStatus("step "+(i+1)+" off");}
+  repaintSteps();
+}
 function punchWriteKey(i){
   const p=patterns[curPat];
   if(playing){
-    p.grid[selSlot][uiStep]=true;trig(selSlot,ac().currentTime+0.005,0);repaintSteps();setStatus("write punch @ step "+(uiStep+1));
+    lastPadBySlot[selSlot]=i;p.grid[selSlot][uiStep]=i;trigPad(selSlot,i,ac().currentTime+0.005);repaintSteps();setStatus("live write: "+padDescriptor(selSlot,i)+" @ step "+(uiStep+1));
   }else{
-    p.grid[selSlot][i]=!p.grid[selSlot][i];repaintSteps();if(p.grid[selSlot][i])trig(selSlot,ac().currentTime+0.01,0);
-    setStatus("write + "+(i+1)+" toggled step "+(i+1));
+    toggleStep(i);
   }
 }
 const HW_FX_NAMES=["loop 16","loop 12","loop short","loop shorter","unison","unison low","octave up","octave down","stutter 4","stutter 3","scratch","scratch fast","6/8 quant","retrigger","reverse","no effect"];
@@ -573,8 +613,9 @@ function startHardwareFx(i){
   FX.filter.down();return {type:"fx",up:()=>FX.filter.up()};
 }
 function stopSoundKeyAction(action){if(action&&action.up)action.up();}
-function selectAndPlaySlot(i){
-  selSlot=i;ensure();trig(i,ac().currentTime+0.01,0);selectSlot();flashPad(i);
+function selectSoundSlot(i){
+  selSlot=i;selectSlot();flashPad(i);
+  setStatus("sound "+(i+1)+" selected: "+slots[i].name+" ("+(isMelodicSlot(i)?"melodic":"drum")+" slot)");
 }
 function handleSoundKeyDown(e,i){
   e.preventDefault();const pad=pads.children[i];try{pad.setPointerCapture(e.pointerId);}catch(_){}
@@ -594,9 +635,10 @@ function handleSoundKeyDown(e,i){
     case"write":
       punchWriteKey(i);action={type:"write"};break;
     case"sound":
-      selectAndPlaySlot(i);setStatus("sound "+(i+1)+" selected: "+slots[i].name);action={type:"sound"};break;
+      selectSoundSlot(i);action={type:"sound"};break;
     default:
-      selectAndPlaySlot(i);action={type:"tap"};
+      if(writeMode){toggleStep(i);action={type:"step"};}
+      else{playNumberKey(i);action={type:"play"};}
   }
   activeSoundKeyActions.set(e.pointerId,action);activeSoundKeyPads.set(e.pointerId,pad);
 }
@@ -610,7 +652,7 @@ function handleSoundKeyUp(e){
 }
 function releaseHeldFnPointer(pointerId){
   const fn=heldPointerToFn.get(pointerId);
-  if(fn&&hwButtons[fn]){heldPointerToFn.delete(pointerId);heldFns.delete(fn);hwButtons[fn].classList.remove("holding");heldFnUsed.delete(fn);}
+  if(fn&&hwButtons[fn]){heldPointerToFn.delete(pointerId);heldFns.delete(fn);hwButtons[fn].classList.remove("holding");heldFnUsed.delete(fn);if(fn==="sound")updatePadLabels();}
 }
 document.addEventListener("pointerup",e=>{
   const fn=heldPointerToFn.get(e.pointerId);
@@ -632,7 +674,7 @@ function showTab(name){
 }
 document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>showTab(t.dataset.tab)));
 function setHwLit(id,on){const el=document.getElementById(id);if(el)el.classList.toggle("lit",on);}
-function updateWriteButton(){setHwLit("hwWrite",writeMode);setStatus(writeMode?"write on: step keys program hits":"write off: step keys audition the selected sound");}
+function updateWriteButton(){setHwLit("hwWrite",writeMode);setStatus(writeMode?"write on: number keys toggle steps":"write off: number keys play the selected sound");}
 bindHoldButton("sound",()=>{showTab("sample");setStatus("hold sound + 1-16 to select; 1-8 melodic, 9-16 drum");});
 bindHoldButton("pattern",()=>{showTab("seq");setStatus("hold pattern + 1-4 here; PO-33 uses pattern + 1-16");});
 bindHoldButton("bpm",()=>setStatus("hold bpm + 1-16 for volume; knob A tempo, knob B swing"));
@@ -645,18 +687,18 @@ const guideEl=document.getElementById("guide");
 const GUIDE={
   seq:`<div class="guide__tag">field notes &middot; sequencer</div>
   <h3>Building a beat</h3>
-  <p class="intro">The sequencer is a 16-step loop &mdash; one bar that repeats forever. Each step is a 16th note. Pick a sound, turn write on, then place hits. That is exactly the PO-33 pattern workflow.</p>
+  <p class="intro">The sequencer is a 16-step loop &mdash; one bar that repeats forever. Hold sound and press 1-16 to choose the slot. Release sound and those same keys play the selected slot: pitches for melodic slots, slices for drum slots.</p>
   <h4>Know this</h4>
   <ul>
     <li>The brighter steps <b>1&middot;5&middot;9&middot;13</b> are the four main beats. Kick on those, <b>snare on 5 &amp; 13</b> (the backbeat), hats in the gaps &mdash; that's the spine of most beats.</li>
-    <li>Use the PO-33 split: slots <b>1-8</b> are melodic, slots <b>9-16</b> are drum/slice slots. Start beats with <b>9 KICK</b>, <b>10 SNARE</b>, and <b>11 HAT</b>.</li>
+    <li>Use the PO-33 split: slots <b>1-8</b> are melodic, slots <b>9-16</b> are drum/slice slots. Key <b>5</b> is the melodic root; drum keys are slices <b>1-16</b>.</li>
     <li><b>Tempo</b> lives on knob A here. On PO-33, press <b>bpm</b> to choose a tempo family, hold <b>bpm</b> and turn <b>B</b> for fine tempo, hold <b>bpm</b> and turn <b>A</b> for swing.</li>
   </ul>
   <h4>Try this</h4>
   <ul class="try">
-    <li>Hold <b>sound + 9</b>, place kicks on 1, 5, 9, 13. Then hold <b>sound + 10</b>, place snares on 5 and 13.</li>
-    <li>Hold <b>sound + 11</b>, add hats on the even steps. Delete a few hats so the rhythm breathes.</li>
-    <li>While playing, hold <b>write</b> and tap a key to punch in a hit. On the real PO-33, release write when the live pass is done.</li>
+    <li>Hold <b>sound + 9</b> to pick a drum slot. Press <b>write</b>, then tap number keys to place steps using the last slice you played.</li>
+    <li>Turn <b>write</b> off and tap <b>1-16</b> to audition the slices. Turn write back on when you want to place or remove steps.</li>
+    <li>While playing, hold <b>write</b> and tap a number key to punch that note or slice into the current step. Release write when the live pass is done.</li>
     <li>Copy <b>A</b> to <b>B</b>, then remove one kick or add a snare fill. On PO-33, copy with <b>write + pattern + target key</b>.</li>
   </ul>`,
   keys:`<div class="guide__tag">field notes &middot; keys</div>
@@ -666,7 +708,7 @@ const GUIDE={
   <ul>
     <li><b>Minor</b> sounds moody (the hip-hop default), <b>major</b> sounds bright, <b>pentatonic</b> has no "wrong" notes &mdash; the easiest for a first melody.</li>
     <li>The <b>root</b> sets the key. Basslines lean on the root and the 5th; melodies wander the rest of the scale.</li>
-    <li>Pick a melodic slot first: <b>sound + 1-8</b>. Drum slots <b>9-16</b> act like slices, so they are better for chops and kits than melodies.</li>
+    <li>Pick a melodic slot first: <b>sound + 1-8</b>. Then the numbered keys play that one sound across the PO-33 scale, with key <b>5</b> as the root.</li>
   </ul>
   <h4>Try this</h4>
   <ul class="try">
@@ -718,7 +760,7 @@ let kRootV=9,kScaleV="minor",octv=0,kbOn=false;const kbPressed=new Set();let mel
 const piano=document.getElementById("piano"),kScaleSeg=document.getElementById("kScale"),kRootSeg=document.getElementById("kRoot"),octVal=document.getElementById("octVal"),melSlotName=document.getElementById("melSlotName");
 Object.keys(SCALES).forEach(n=>{const b=document.createElement("button");b.className="mini"+(n===kScaleV?" sel":"");b.textContent=n;b.addEventListener("click",()=>{kScaleV=n;[...kScaleSeg.children].forEach(x=>x.classList.toggle("sel",x.textContent===n));buildPiano();});kScaleSeg.appendChild(b);});
 NOTE_NAMES.forEach((nm,i)=>{const b=document.createElement("button");b.className="mini"+(i===kRootV?" sel":"");b.textContent=nm;b.style.padding="8px 7px";b.addEventListener("click",()=>{kRootV=i;[...kRootSeg.children].forEach((x,xi)=>x.classList.toggle("sel",xi===i));buildPiano();});kRootSeg.appendChild(b);});
-function playKey(i){ensure();const semi=kRootV+i+octv;trig(selSlot,ac().currentTime+0.005,semi);if(melArmed&&playing){const p=patterns[curPat];p.mel[uiStep]=semi;p.melSlot=selSlot;setStatus("note recorded @ step "+(uiStep+1));}}
+function playKey(i){if(!isMelodicSlot(selSlot)){setStatus("choose sound + 1-8 for melodic keys");return;}ensure();const semi=kRootV+i+octv;trig(selSlot,ac().currentTime+0.005,semi);if(melArmed&&playing){const p=patterns[curPat];p.mel[uiStep]=semi;p.melSlot=selSlot;setStatus("note recorded @ step "+(uiStep+1));}}
 function buildPiano(){piano.innerHTML="";const iv=SCALES[kScaleV];for(let i=0;i<=12;i++){const semi=i%12,inS=iv.indexOf(semi)>=0,isR=(semi===0),nm=NOTE_NAMES[(kRootV+i)%12];
   const k=document.createElement("button");k.className="pkey"+(nm.indexOf("#")>=0?" sharp":"")+(inS?" inscale":"")+(isR?" root":"");
   k.innerHTML=nm+'<span class="cap">'+CAPS[i]+'</span>';
@@ -737,7 +779,7 @@ const edBody=document.getElementById("edBody"),edName=document.getElementById("e
 function renderEditor(){edName.textContent=slots[selSlot].name;const s=slots[selSlot];edBody.innerHTML="";
   /* preview + source row */
   const top=document.createElement("div");top.className="rowflex";top.style.marginTop="10px";
-  const prev=mk("button","mini","&#9654; preview");prev.addEventListener("click",()=>{ensure();trig(selSlot,ac().currentTime+0.01,0);});
+  const prev=mk("button","mini","&#9654; preview");prev.addEventListener("click",()=>{ensure();trigPad(selSlot,lastPadBySlot[selSlot]??defaultPadForSlot(selSlot),ac().currentTime+0.01);});
   top.appendChild(prev);
   const rec=mk("button","mini","&#9679; record mic");rec.addEventListener("click",()=>recordInto(selSlot,rec));top.appendChild(rec);
   const bBlip=mk("button","mini","load blip");bBlip.addEventListener("click",()=>{loadSample(selSlot,makeBlip());});top.appendChild(bBlip);
@@ -801,9 +843,9 @@ function updateSongBtn(){const songOn=playing&&playChain;songBtn.innerHTML=songO
 function startNewSong(){
   if(playing)stopTransport();
   patterns=[newPattern(),newPattern(),newPattern(),newPattern()];
-  chain=[];curPat=0;selSlot=8;uiStep=0;playChain=null;chainPos=0;writeMode=true;
+  chain=[];curPat=0;selSlot=8;uiStep=0;playChain=null;chainPos=0;writeMode=false;
   renderChain();refreshPatBtns();selectSlot();clearStepUI();updateWriteButton();showTab("seq");
-  setStatus("new song: blank patterns, sounds kept");
+  setStatus("new song: blank patterns, sounds kept; press write to program");
 }
 document.querySelectorAll(".palbtn").forEach(b=>b.addEventListener("click",()=>{chain.push(b.dataset.pat);renderChain();}));
 document.getElementById("newSong").addEventListener("click",startNewSong);
@@ -839,7 +881,7 @@ const FX={
   filter:{down(){ensure();fxRamp(mFilter.frequency,420,0.12);},up(){if(mFilter)fxRamp(mFilter.frequency,20000,0.25);}},
   echo:{down(){ensure();fxRamp(mWet.gain,0.55,0.04);fxRamp(mFb.gain,0.32,0.04);},up(){if(mWet)fxRamp(mWet.gain,0,0.3);if(mFb)fxRamp(mFb.gain,0,0.3);}},
   gate:{down(){ensure();clearInterval(fxGate);let on=true;const ms=(60/bpm)/4*1000/2;fxGate=setInterval(()=>{on=!on;const c=ac();mDrive.gain.cancelScheduledValues(c.currentTime);mDrive.gain.setValueAtTime(on?1:0.0001,c.currentTime);},ms);},up(){clearInterval(fxGate);fxGate=null;if(mDrive){const c=ac();mDrive.gain.cancelScheduledValues(c.currentTime);mDrive.gain.setValueAtTime(1,c.currentTime);}}},
-  roll:{down(){ensure();clearInterval(fxRoll);const ms=(60/bpm)/4*1000/2;trig(selSlot,ac().currentTime+0.005,0);fxRoll=setInterval(()=>{trig(selSlot,ac().currentTime+0.005,0);},ms);},up(){clearInterval(fxRoll);fxRoll=null;}}
+  roll:{down(){ensure();clearInterval(fxRoll);const ms=(60/bpm)/4*1000/2,pad=lastPadBySlot[selSlot]??defaultPadForSlot(selSlot);trigPad(selSlot,pad,ac().currentTime+0.005);fxRoll=setInterval(()=>{trigPad(selSlot,pad,ac().currentTime+0.005);},ms);},up(){clearInterval(fxRoll);fxRoll=null;}}
 };
 document.querySelectorAll(".fxpad").forEach(pad=>{const n=pad.dataset.fx;
   pad.addEventListener("pointerdown",e=>{e.preventDefault();ensure();try{pad.setPointerCapture(e.pointerId);}catch(_){}pad.classList.add("holding");FX[n].down();});
