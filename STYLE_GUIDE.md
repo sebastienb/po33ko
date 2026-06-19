@@ -1,8 +1,9 @@
 # Style Guide — PO-33 Sampler & Synth Primer
 
 The whole project should look and feel like the **Teenage Engineering PO-33
-K.O!**: an exposed circuit board you operate, not a web page about one. When in
-doubt, ask "would this look at home screen-printed on a little grey device?"
+K.O!**: an exposed black circuit board you operate, not a web page about one.
+When in doubt, ask "would this help someone learn the real PO-33 control
+layout?"
 
 This guide covers both **visual design** and **code conventions**. Keep both
 pages consistent with it.
@@ -14,7 +15,8 @@ pages consistent with it.
 - **It's a device, not a document.** Controls are tactile: crisp borders, a
   hard bottom shadow that "depresses" on press, screen-printed labels.
 - **One accent, used sparingly.** Signal orange marks what's *active / on /
-  playing* — never decoration. Most of the UI is warm grey + black.
+  playing* and key PO-33 silkscreen labels. Most of the surrounding lesson UI is
+  warm grey; the device itself is black with white/silver hardware controls.
 - **The LCD is the only "screen."** Khaki-green with dark pixels; the only place
   the pixel font appears.
 - **Technical, terse, lowercase.** Labels read like silkscreen: `Space Mono`,
@@ -70,8 +72,12 @@ Patterns:
 
 ## 4. Shape, depth, motion
 
-- **Borders:** `1.5px solid var(--metal)` on virtually every control.
-- **Radii:** keys/buttons 5–8px, panels 10–12px, the device shell 18px.
+- **Device silhouette:** the playable device uses a black rectangular board,
+  top hanger, wide LCD, A/B knobs, `sound / pattern / bpm` row, 4x4 numbered
+  matrix, and right-side `record / FX / play / write` action column.
+- **Borders:** `1.5px solid var(--metal)` on lesson controls; PO-style hardware
+  keys use dark switch outlines plus silver/white caps.
+- **Radii:** hardware key caps 4–8px, panels 10–12px, the device shell ~10px.
 - **Depth (the signature):** controls sit on a hard shadow and depress on press.
   ```css
   box-shadow: 0 2px 0 var(--shadow);          /* resting */
@@ -95,15 +101,19 @@ Patterns:
 
 Reusable looks (class names vary slightly between pages — keep them aligned):
 
-- **Button** (`.btn`, `.mini`, `.fn`, `.util`, `.tab`): key gradient
+- **Hardware function/key buttons** (`.fn`, `.hw-fn`, `.pad`, `.kkey` inside the
+  device): silver/white switch body, black circular center, orange outline for
+  selected/on states. Keep the 4x4 + action-column layout.
+- **Lesson/editor buttons** (`.btn`, `.mini`, `.util`, `.tab`): key gradient
   (`linear-gradient(var(--key),var(--key-lo))`), metal border, depress shadow.
   - **Selected / active:** fill `--metal` with `--key` text, **or** fill
     `--signal` with white for the primary/"on" state (play, active tab).
 - **Step cell** (`.stp`, `.step`): tall thin cell; `.beat` (steps 1·5·9·13) gets
   a darker border; `.on` fills `--metal`; `.cur` (playhead) gets a signal ring
   `box-shadow:0 0 0 2px var(--signal),0 0 9px rgba(232,82,31,.6)`.
-- **Pad** (`.pad`, `.fxpad`): bigger key; `.sel` = signal outline; `.holding`
-  (FX) = signal fill + depressed.
+- **Pad** (`.pad`, `.fxpad`): in-device `.pad` means a PO-style sound key;
+  standalone `.fxpad` remains a larger lesson/editor key. `.sel` = signal
+  outline; `.holding` (FX) = signal fill + depressed.
 - **Knob** (`.knob`): radial-gradient white cap, metal ring, a `.dial` child
   rotated by JS (`-135°…+135°` across the range). Rotary drag = vertical pointer
   movement.

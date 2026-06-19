@@ -1,0 +1,11 @@
+{
+  "name": "PO-33 KO Trainer",
+  "short_name": "PO-33 Trainer",
+  "description": "A portable PO-33-style beatmaking, sampling, and practice trainer.",
+  "start_url": "./po33-primer.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#b4b1a6",
+  "theme_color": "#e8521f"
+}

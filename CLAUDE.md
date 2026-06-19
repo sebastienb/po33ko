@@ -41,10 +41,12 @@ they must live in the **same folder** for navigation to work.
 
 A scrollable primer. Sections, in order:
 
-1. **Device hero** — a faithful CSS recreation of the PO-33 that *is* a working
-   3-lane (kick / snare / hat) 16-step sequencer. Draggable tempo & swing knobs,
-   a pixel-LCD that animates on the beat, function keys that print hardware tips,
-   and preset loaders: **Load beat** (classic), **AFD 91** (All Falls Down feel).
+1. **Device hero** — a PO-33-shaped black board with the break-away hanger,
+   wide LCD, A/B knobs, `sound / pattern / bpm`, right-side
+   `record / FX / play / write`, and a 4x4 numbered key matrix. It is also a
+   working 3-lane (kick / snare / hat) 16-step sequencer. The modifier buttons
+   teach the real hardware idea: `sound + number`, `pattern + number`, `FX +
+   number`, and `write` on/off.
 2. **01 Sampling** — record from mic or load built-in sounds; drag trim handles
    on a waveform; pitch slider; melodic keyboard.
 3. **02 Scales & keys** — pick root + scale; in-scale keys light up; play with
@@ -58,13 +60,16 @@ A scrollable primer. Sections, in order:
 
 ## Page 2 — `po33-studio.html` (Studio)
 
-A single device with a transport, three knobs (tempo / swing / vol), an LCD,
-four mode tabs, and an always-on FX row. A contextual **"field notes"** panel
-below the device swaps content per tab (theory + techniques).
+A single PO-style device with a hanger, two visible A/B knobs, an LCD,
+`sound / pattern / bpm` modifiers, a 4x4 set of sound keys, a right-side
+`record / FX / play / write` column, four editor tabs, and an always-on FX row.
+A contextual **"field notes"** panel below the device swaps content per tab
+(theory + techniques).
 
 Tabs:
 
-- **SEQ** — 8 sound slots (pads), per-slot 16-step lane, per-slot tune,
+- **SEQ** — 16 sound slots (keys 1-8 melodic, 9-16 drum), per-slot 16-step lane,
+  per-slot tune,
   4 patterns (A–D) with **copy →** / **clear**.
 - **KEYS** — selected slot becomes a scale-locked melodic keyboard (root + scale
   + asdf typing + octave shift). **Rec melody** records live, quantized to the
