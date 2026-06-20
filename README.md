@@ -6,6 +6,7 @@ chaining, melodic playing, and live effects.
 Open the app:
 
 - `po33-studio.html` - playable sampler workspace
+- `po33-studio.html#learn` - hip-hop, dance, and house beat lessons
 - `po33-primer.html` - legacy guided lessons
 
 ## iPhone

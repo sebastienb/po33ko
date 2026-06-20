@@ -24,7 +24,7 @@
   html{-webkit-text-size-adjust:100%}
   body{min-height:100vh;background:linear-gradient(180deg,#e2ded4 0,#cbc5b7 100%);color:var(--ink);
     font-family:Inter,system-ui,sans-serif;line-height:1.35;padding:max(12px,env(safe-area-inset-top)) 12px max(32px,env(safe-area-inset-bottom))}
-  button,a,input,.slot,.pad,.step,.seq-cell,.seq-row-label,.key,.knob{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+  button,a,input,.slot,.pad,.step,.seq-cell,.seq-row-label,.key,.knob,.lesson-btn{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
   button,input{font:inherit}
   .app{max-width:1220px;margin:0 auto}
   .nav{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
@@ -132,9 +132,27 @@
   .fx-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
   .fx{min-height:58px;border:1.5px solid var(--hard);border-radius:8px;background:#fffdf8;font-weight:800;cursor:pointer}
   .fx.holding{background:var(--blue);color:#fff}
+  .lessons-panel{margin-top:12px}
+  .lesson-layout{display:grid;grid-template-columns:minmax(210px,.36fr) minmax(0,1fr);gap:12px}
+  .lesson-list{display:flex;flex-direction:column;gap:7px}
+  .lesson-btn{border:1.5px solid var(--line);background:#fffdf8;border-radius:7px;padding:10px;text-align:left;cursor:pointer;font-weight:800}
+  .lesson-btn small{display:block;margin-top:3px;font-family:"Space Mono",monospace;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+  .lesson-btn.active{border-color:var(--accent);background:#e6f5f5}
+  .lesson-detail{border:1.5px solid var(--line);border-radius:8px;background:#fffdf8;padding:12px;min-width:0}
+  .lesson-kicker{font-family:"Space Mono",monospace;font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+  .lesson-detail h3{font-size:20px;margin-top:4px}
+  .lesson-copy{font-size:13px;color:var(--muted);margin-top:7px}
+  .lesson-steps{list-style:none;counter-reset:lesson;margin-top:10px}
+  .lesson-steps li{counter-increment:lesson;display:flex;gap:10px;padding:9px 0;border-top:1px solid #e5dfd2;font-size:13px;color:var(--ink)}
+  .lesson-steps li::before{content:counter(lesson,decimal-leading-zero);font-family:"Space Mono",monospace;font-size:11px;font-weight:700;color:var(--accent);flex:none;padding-top:1px}
+  .lesson-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .gloss-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+  .gloss-item{border:1.5px solid var(--line);border-radius:7px;background:var(--panel);padding:9px}
+  .gloss-item b{display:block;font-family:"Space Mono",monospace;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--accent)}
+  .gloss-item span{display:block;font-size:12px;color:var(--muted);margin-top:3px}
   footer{text-align:center;margin-top:18px;font-family:"Space Mono",monospace;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
   @media (max-width:980px){.workspace{grid-template-columns:1fr}.transport{grid-template-columns:repeat(2,1fr)}.control{grid-column:auto}.slot-grid{grid-template-columns:repeat(4,1fr)}}
-  @media (max-width:560px){.slot-grid{grid-template-columns:repeat(2,1fr)}.pad-grid{grid-template-columns:repeat(4,1fr)}.steps{gap:3px}.ruler{gap:3px}.seq-row{grid-template-columns:minmax(64px,.9fr) repeat(16,minmax(0,1fr))}.seq-row-label{padding:4px 5px}.seq-cell{height:21px;font-size:8px}.transport{grid-template-columns:1fr 1fr}.brand{flex-direction:column;gap:4px}.nav{align-items:flex-start}.key{min-height:68px}}
+  @media (max-width:560px){.slot-grid{grid-template-columns:repeat(2,1fr)}.pad-grid{grid-template-columns:repeat(4,1fr)}.steps{gap:3px}.ruler{gap:3px}.seq-row{grid-template-columns:minmax(64px,.9fr) repeat(16,minmax(0,1fr))}.seq-row-label{padding:4px 5px}.seq-cell{height:21px;font-size:8px}.lesson-layout{grid-template-columns:1fr}.gloss-grid{grid-template-columns:1fr}.transport{grid-template-columns:1fr 1fr}.brand{flex-direction:column;gap:4px}.nav{align-items:flex-start}.key{min-height:68px}}
 </style>
 </head>
 <body>
@@ -143,6 +161,7 @@
     <div class="brand"><h1>Sampler Lab</h1><span>sample, sequence, arrange</span></div>
     <div class="navlinks">
       <a class="navlink active" href="./po33-studio.html?v=generic-ui" data-nav-target="./po33-studio.html?v=generic-ui">studio</a>
+      <a class="navlink" href="#learn" id="learnNav">learn</a>
     </div>
   </nav>
 
@@ -160,6 +179,23 @@
     <div class="control"><label for="volume">Volume <output id="volumeOut">90</output></label><input id="volume" type="range" min="0" max="100" value="90"></div>
   </section>
 
+  <section class="panel lessons-panel" id="learnSection">
+    <div class="panel-head"><h2>Beat Lessons</h2><span class="tiny">recipes + why</span></div>
+    <div class="main-body">
+      <div class="lesson-layout">
+        <div class="lesson-list" id="lessonList"></div>
+        <div class="lesson-detail">
+          <div class="lesson-kicker" id="lessonKicker"></div>
+          <h3 id="lessonTitle"></h3>
+          <p class="lesson-copy" id="lessonCopy"></p>
+          <ol class="lesson-steps" id="lessonSteps"></ol>
+          <div class="gloss-grid" id="lessonWhy"></div>
+          <div class="lesson-actions" id="lessonActions"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <div class="workspace">
     <aside class="panel">
       <div class="panel-head"><h2>Sound Library</h2><span class="tiny" id="slotCount">16 slots</span></div>
@@ -169,7 +205,7 @@
       </div>
     </aside>
 
-    <main>
+    <main id="mainPanel">
       <div class="tabs">
         <button class="tab active" data-view="seq">Sequence</button>
         <button class="tab" data-view="pads">Play</button>
@@ -234,6 +270,7 @@
           </div>
         </div>
       </section>
+
     </main>
 
     <aside class="panel">
@@ -303,6 +340,8 @@ const els={
   selectBtn:document.getElementById("selectBtn"),fxBtn:document.getElementById("fxBtn"),patternBtn:document.getElementById("patternBtn"),recordBtn:document.getElementById("recordBtn"),
   bpm:document.getElementById("bpm"),swing:document.getElementById("swing"),volume:document.getElementById("volume"),bpmOut:document.getElementById("bpmOut"),swingOut:document.getElementById("swingOut"),volumeOut:document.getElementById("volumeOut"),
   patternReadout:document.getElementById("patternReadout"),sequenceMatrix:document.getElementById("sequenceMatrix"),sequenceCount:document.getElementById("sequenceCount"),
+  lessonList:document.getElementById("lessonList"),lessonKicker:document.getElementById("lessonKicker"),lessonTitle:document.getElementById("lessonTitle"),
+  lessonCopy:document.getElementById("lessonCopy"),lessonSteps:document.getElementById("lessonSteps"),lessonWhy:document.getElementById("lessonWhy"),lessonActions:document.getElementById("lessonActions"),
   piano:document.getElementById("piano"),chain:document.getElementById("chain"),songNow:document.getElementById("songNow")
 };
 function status(t){els.status.textContent=t;}
@@ -311,6 +350,7 @@ function padDesc(slot,pad){return isInstrument(slot)?"note "+(pad+1)+" "+noteLab
 function triggerPad(slot,pad,t){const inst=isInstrument(slot),semi=inst?noteSteps[pad]:drumTuning[pad];trig(slot,t,semi,inst?null:pad);}
 function setView(name){document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.view===name));document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id==="view-"+name));}
 document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>setView(t.dataset.view)));
+document.getElementById("learnNav").addEventListener("click",e=>{e.preventDefault();document.getElementById("learnSection").scrollIntoView({behavior:"smooth",block:"start"});});
 
 function renderSlots(){els.slotGrid.innerHTML="";slots.forEach((s,i)=>{const b=document.createElement("button");b.className="slot"+(i===selected?" active":"");b.innerHTML='<span class="slot-key">'+padLabels[i]+'</span><div class="slot-num">'+(i+1)+'</div><div class="slot-name">'+s.name+'</div><div class="slot-type">'+s.type+'</div>';b.setAttribute("aria-keyshortcuts",padLabels[i]);b.addEventListener("click",()=>previewSlot(i));els.slotGrid.appendChild(b);});}
 function renderPads(){els.padGrid.innerHTML="";for(let i=0;i<16;i++){const b=document.createElement("button");b.className="pad";b.innerHTML='<span class="pad-key">'+padLabels[i]+'</span><b>'+(i+1)+'</b><small>'+padDesc(selected,i).replace("note "+(i+1)+" ","")+'</small>';b.setAttribute("aria-label","Play "+padDesc(selected,i)+" from "+slots[selected].name);b.setAttribute("aria-keyshortcuts",padLabels[i]);b.addEventListener("pointerdown",e=>startPadPointer(e,i,b));b.addEventListener("pointerup",e=>finishPadPointer(e.pointerId));b.addEventListener("pointercancel",e=>finishPadPointer(e.pointerId));els.padGrid.appendChild(b);}els.padMode.textContent=isInstrument(selected)?"Notes":"Slices";}
@@ -318,6 +358,45 @@ function stepLabel(slot,pad){if(pad==null)return"";if(isInstrument(slot)){const 
 function renderSequenceMatrix(p){els.sequenceMatrix.innerHTML="";const used=[];p.grid.forEach((row,i)=>{if(row.some(v=>v!=null))used.push(i);});els.sequenceCount.textContent=used.length?used.length+" sound"+(used.length===1?"":"s"):"empty";if(!used.length){const empty=document.createElement("div");empty.className="seq-empty";empty.textContent="No steps in this pattern.";els.sequenceMatrix.appendChild(empty);return;}used.forEach(si=>{const row=document.createElement("div");row.className="seq-row"+(si===selected?" selected":"");const label=document.createElement("button");label.type="button";label.className="seq-row-label";label.innerHTML='<b>'+(si+1)+" "+slots[si].name+'</b><span>'+slots[si].type+'</span>';label.addEventListener("click",()=>selectSlot(si));row.appendChild(label);for(let i=0;i<16;i++){const ev=p.grid[si][i],cell=document.createElement("button");cell.type="button";cell.className="seq-cell"+(i%4===0?" beat":"")+(ev!=null?" on "+slots[si].type:"")+(i===uiStep&&playing?" cur":"");cell.dataset.slot=si;cell.dataset.step=i;if(ev!=null)cell.textContent=stepLabel(si,ev);cell.setAttribute("aria-label",(ev==null?"Empty":slots[si].name+" "+padDesc(si,ev))+" step "+(i+1));cell.addEventListener("click",()=>{if(selected!==si)selectSlot(si);toggleStepForSlot(si,i);});row.appendChild(cell);}els.sequenceMatrix.appendChild(row);});}
 function renderSteps(){const p=patterns[currentPattern];els.steps.innerHTML="";for(let i=0;i<16;i++){const b=document.createElement("button");b.className="step"+(i%4===0?" beat":"")+(p.grid[selected][i]!=null?" on":"")+(i===uiStep&&playing?" cur":"");b.addEventListener("click",()=>toggleStep(i));els.steps.appendChild(b);}els.ruler.innerHTML="";for(let i=0;i<16;i++){const s=document.createElement("span");s.textContent=i+1;els.ruler.appendChild(s);}renderSequenceMatrix(p);els.patternReadout.textContent="Pattern "+patternNames[currentPattern];}
 function renderPiano(){els.piano.innerHTML="";const names=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B","C"];const scale=[0,2,3,5,7,8,10,12];names.forEach((n,i)=>{const b=document.createElement("button");const semi=i%12;b.className="key"+(n.includes("#")?" sharp":"")+(scale.includes(i)?" in-scale":"")+(i===0||i===12?" root":"");b.textContent=n;b.addEventListener("pointerdown",e=>{e.preventDefault();if(!isInstrument(selected)){status("Choose an instrument slot for keys.");return;}triggerPad(selected,Math.min(i,12),ac().currentTime+.01);b.classList.add("active");setTimeout(()=>b.classList.remove("active"),130);});els.piano.appendChild(b);});}
+const BEAT_RECIPES={
+  hiphop:{name:"hip-hop pocket",bpm:88,swing:22,focus:8,events:[[8,[0,6,10]],[9,[4,12]],[10,[0,2,4,6,8,10,12,14]],[13,[15]]]},
+  dance:{name:"dance push",bpm:118,swing:6,focus:8,events:[[8,[0,3,8,11]],[9,[4,12]],[11,[4,12]],[10,[2,6,10,14]],[14,[7,15]]]},
+  house:{name:"house four-on-floor",bpm:124,swing:2,focus:8,events:[[8,[0,4,8,12]],[11,[4,12]],[10,[2,6,10,14]],[14,[1,3,5,7,9,11,13,15]]]}
+};
+const LESSONS=[
+  {
+    id:"hiphop",kicker:"88 BPM / swung 16ths",title:"Hip-hop beat",
+    copy:"Hip-hop works because the snare gives you the head-nod backbeat while the kick leaves pockets for bass and samples. The hats carry time, but swing makes them lean instead of marching.",
+    steps:["Load the hip-hop recipe, or start blank at about 85-92 BPM with swing around 18-25.","Put KICK on steps 1, 7, and 11. Step 1 starts the bar; 7 and 11 answer the snare without making the beat too busy.","Put SNARE on steps 5 and 13. Those are beats 2 and 4, the classic backbeat your body locks onto.","Put HAT on 1, 3, 5, 7, 9, 11, 13, and 15. These eighth notes keep the groove moving while the kick stays sparse.","Add one extra RIM or PERC near step 16 if you want a pickup into the next bar."],
+    why:[["Backbeat","Snare on 5 and 13 makes the loop feel grounded."],["Swing","Late off-steps create the lazy pocket people associate with hip-hop."],["Space","Fewer kicks leave room for bass, vocals, chops, and mistakes that sound human."]],
+    actions:[["Load hip-hop beat","recipe","hiphop"],["Open Sequence","view","seq"],["Play pattern","play"]]
+  },
+  {
+    id:"dance",kicker:"118 BPM / syncopated",title:"Dance beat",
+    copy:"A dance beat pushes forward by repeating a steady backbeat but moving the kick around it. The syncopated kick gives bounce; the clap or snare keeps dancers oriented.",
+    steps:["Load the dance recipe, or set the tempo around 112-122 BPM with light swing.","Put KICK on steps 1, 4, 9, and 12. The steps just before beats 2 and 4 pull the groove forward.","Put SNARE and/or CLAP on steps 5 and 13. This keeps the pattern readable even when the kick is syncopated.","Put HAT on steps 3, 7, 11, and 15. These offbeat hats make the empty spaces feel intentional.","Add SHAKER or PERC on steps 8 and 16 as little turnarounds into the next half-bar."],
+    why:[["Push","Kicks before the backbeat create momentum without becoming four-on-floor."],["Anchor","Snare or clap on 5 and 13 tells the listener where the bar is."],["Offbeats","Hats between the main pulses make the beat feel like it is lifting."]],
+    actions:[["Load dance beat","recipe","dance"],["Select clap","select","11"],["Play pattern","play"]]
+  },
+  {
+    id:"house",kicker:"124 BPM / four-on-floor",title:"House beat",
+    copy:"House is built for steady motion. The kick hits every beat, the clap marks beats 2 and 4, and the offbeat hat supplies the bounce between kicks.",
+    steps:["Load the house recipe, or set the tempo around 120-126 BPM with almost no swing.","Put KICK on steps 1, 5, 9, and 13. That is four-on-floor: one kick on every beat.","Put CLAP on steps 5 and 13. It lands with the second and fourth kicks, making the loop feel big and stable.","Put HAT on steps 3, 7, 11, and 15. Those are the offbeats, the classic house lift.","Put SHAKER on the even spaces between hats if you want more drive, then lower volume if it gets crowded."],
+    why:[["Four-on-floor","A kick every quarter note gives dancers a constant pulse."],["Lift","Offbeat hats answer the kick and make the pattern bounce."],["Repetition","House changes slowly, so tiny sound and filter moves matter more than many new hits."]],
+    actions:[["Load house beat","recipe","house"],["Open FX","view","mix"],["Play pattern","play"]]
+  },
+  {
+    id:"arrange",kicker:"from loop to track",title:"Turn a beat into sections",
+    copy:"A loop becomes a track when one or two things change at the right time. Keep Pattern A as the main groove, copy it to B, then remove or add one event so the listener feels movement.",
+    steps:["Build Pattern A with one of the recipes.","Use Copy to make Pattern B from A instead of rebuilding from scratch.","In B, remove a kick, add a clap, or add a fill on step 16. Keep most of the groove the same.","Open Song and chain A, A, B, A. Repetition teaches the ear what normal is; B feels like a change because A was stable.","Use FX only at section changes so the effect feels like performance, not clutter."],
+    why:[["A section","The main pattern establishes the groove."],["B section","A small change feels bigger after repetition."],["Fill","A late hit on step 16 points the listener into the next bar."]],
+    actions:[["Copy current pattern","copy"],["Open Song","view","song"],["Play song","songplay"]]
+  }
+];
+let activeLesson="hiphop";
+function loadBeatRecipe(id){const r=BEAT_RECIPES[id];if(!r)return;if(playing)stop();bpm=r.bpm;swing=r.swing;syncControls();patterns[currentPattern]=newPattern();r.events.forEach(([slot,steps])=>steps.forEach(s=>patterns[currentPattern].grid[slot][s]=lastPad[slot]));renderSteps();selectSlot(r.focus);setView("seq");status("Loaded "+r.name+".");}
+function lessonAction(kind,value){if(kind==="recipe")loadBeatRecipe(value);else if(kind==="view"){setView(value);status("Opened "+value+".");}else if(kind==="select"){setView("seq");selectSlot(+value);}else if(kind==="play"){if(!playing)start(null);else status("Pattern is already playing.");}else if(kind==="copy"){document.getElementById("copyPattern").click();}else if(kind==="songplay"){setView("song");document.getElementById("playSong").click();}}
+function renderLessons(){els.lessonList.innerHTML="";LESSONS.forEach(l=>{const b=document.createElement("button");b.className="lesson-btn"+(l.id===activeLesson?" active":"");b.innerHTML=l.title+"<small>"+l.kicker+"</small>";b.addEventListener("click",()=>{activeLesson=l.id;renderLessons();});els.lessonList.appendChild(b);});const l=LESSONS.find(x=>x.id===activeLesson)||LESSONS[0];els.lessonKicker.textContent=l.kicker;els.lessonTitle.textContent=l.title;els.lessonCopy.textContent=l.copy;els.lessonSteps.innerHTML="";l.steps.forEach(s=>{const li=document.createElement("li");li.textContent=s;els.lessonSteps.appendChild(li);});els.lessonWhy.innerHTML="";l.why.forEach(([term,body])=>{const d=document.createElement("div");d.className="gloss-item";d.innerHTML="<b>"+term+"</b><span>"+body+"</span>";els.lessonWhy.appendChild(d);});els.lessonActions.innerHTML="";l.actions.forEach(([label,kind,value])=>{const b=document.createElement("button");b.className="small-btn";b.textContent=label;b.addEventListener("click",()=>lessonAction(kind,value));els.lessonActions.appendChild(b);});}
 function selectSlot(i){selected=i;renderSlots();renderPads();renderSteps();renderEditor();els.laneName.textContent=slots[selected].name;els.laneType.textContent=slots[selected].type;status("Selected "+slots[selected].name+".");}
 function previewSlot(i){selectSlot(i);playPad(lastPad[selected]);}
 function playPad(i){lastPad[selected]=i;ensure();triggerPad(selected,i,ac().currentTime+.01);flashPad(i);status(slots[selected].name+" "+padDesc(selected,i)+".");}
@@ -392,7 +471,7 @@ function startFx(i){const keys=Object.keys(FX),name=keys[i%keys.length];FX[name]
 document.querySelectorAll(".fx").forEach(b=>{const name=b.dataset.fx;b.addEventListener("pointerdown",e=>{e.preventDefault();ensure();b.classList.add("holding");FX[name].down();});const up=()=>{if(b.classList.contains("holding")){b.classList.remove("holding");FX[name].up();}};b.addEventListener("pointerup",up);b.addEventListener("pointercancel",up);});
 
 slots[4].buffer=makeBlip();slots[5].buffer=makeBass();slots[6].buffer=makeBlip();slots[7].buffer=makeBass();
-renderSlots();renderPads();renderSteps();renderPiano();renderEditor();renderChain();renderPatternButtons();syncControls();selectSlot(selected);
+renderSlots();renderPads();renderSteps();renderPiano();renderEditor();renderChain();renderPatternButtons();renderLessons();syncControls();selectSlot(selected);
 window.addEventListener("resize",()=>{if(document.getElementById("wave"))initWave();});
 (function(){const bar=document.getElementById("soundbar");function go(){try{ensure();if(actx&&actx.state!=="running")actx.resume();}catch(_){}if(bar&&actx&&actx.state==="running")bar.classList.add("hide");}["pointerdown","keydown","touchstart"].forEach(ev=>window.addEventListener(ev,go));bar.addEventListener("click",go);})();
 </script>
