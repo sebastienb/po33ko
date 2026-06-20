@@ -136,26 +136,32 @@
   .fx-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
   .fx{min-height:58px;border:1.5px solid var(--hard);border-radius:8px;background:#fffdf8;font-weight:800;cursor:pointer}
   .fx.holding{background:var(--blue);color:#fff}
-  .lessons-panel{margin:18px 0 30px}
-  .lesson-layout{display:grid;grid-template-columns:minmax(210px,.36fr) minmax(0,1fr);gap:12px}
-  .lesson-list{display:flex;flex-direction:column;gap:7px}
-  .lesson-btn{border:1.5px solid var(--line);background:#fffdf8;border-radius:7px;padding:10px;text-align:left;cursor:pointer;font-weight:800}
-  .lesson-btn small{display:block;margin-top:3px;font-family:"Space Mono",monospace;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
-  .lesson-btn.active{border-color:var(--accent);background:#e6f5f5}
-  .lesson-detail{border:1.5px solid var(--line);border-radius:8px;background:#fffdf8;padding:12px;min-width:0}
-  .lesson-kicker{font-family:"Space Mono",monospace;font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
-  .lesson-detail h3{font-size:20px;margin-top:4px}
-  .lesson-copy{font-size:13px;color:var(--muted);margin-top:7px}
+  .side-stack{display:flex;flex-direction:column;gap:12px;min-width:0}
+  .side-stack .panel{min-width:0}
+  .guide-panel{background:var(--hard)}
+  .guide-panel .panel-head{padding:9px 10px;background:var(--hard);border-bottom-color:#11151a;color:var(--surface)}
+  .guide-panel .panel-head .tiny{color:#d8d5cc}
+  .guide-panel .main-body{max-height:390px;overflow:auto;padding:9px;background:var(--hard);scrollbar-width:thin;scrollbar-color:var(--lcd) #11151a}
+  .lesson-layout{display:grid;grid-template-columns:1fr;gap:8px}
+  .lesson-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+  .lesson-btn{min-height:45px;border:1.5px solid #11151a;background:var(--panel);border-radius:6px;padding:7px;text-align:left;cursor:pointer;font-weight:800;font-size:12px;line-height:1.1}
+  .lesson-btn small{display:block;margin-top:3px;font-family:"Space Mono",monospace;font-size:8px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  .lesson-btn.active{border-color:var(--accent-2);background:var(--lcd);box-shadow:inset 0 0 0 1.5px rgba(25,28,32,.18)}
+  .lesson-detail{border:1.5px solid #11151a;border-radius:6px;background:var(--lcd);padding:9px;min-width:0;box-shadow:inset 0 0 0 2px rgba(255,255,255,.18)}
+  .lesson-kicker{font-family:"Space Mono",monospace;font-size:9px;color:#283018;text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+  .lesson-detail h3{font-size:17px;margin-top:3px}
+  .lesson-copy{font-size:12px;color:#283018;margin-top:6px}
   .lesson-steps{list-style:none;counter-reset:lesson;margin-top:10px}
-  .lesson-steps li{counter-increment:lesson;display:flex;gap:10px;padding:9px 0;border-top:1px solid #e5dfd2;font-size:13px;color:var(--ink)}
-  .lesson-steps li::before{content:counter(lesson,decimal-leading-zero);font-family:"Space Mono",monospace;font-size:11px;font-weight:700;color:var(--accent);flex:none;padding-top:1px}
-  .lesson-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-  .gloss-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
-  .gloss-item{border:1.5px solid var(--line);border-radius:7px;background:var(--panel);padding:9px}
-  .gloss-item b{display:block;font-family:"Space Mono",monospace;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--accent)}
-  .gloss-item span{display:block;font-size:12px;color:var(--muted);margin-top:3px}
+  .lesson-steps li{counter-increment:lesson;display:flex;gap:8px;padding:6px 0;border-top:1.5px solid rgba(40,48,24,.18);font-size:12px;color:#191c20}
+  .lesson-steps li::before{content:counter(lesson,decimal-leading-zero);font-family:"Space Mono",monospace;font-size:10px;font-weight:700;color:#283018;flex:none;padding-top:1px}
+  .lesson-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+  .guide-panel .small-btn{font-size:11px;padding:7px 8px;background:#fffdf8}
+  .gloss-grid{display:grid;grid-template-columns:1fr;gap:6px;margin-top:8px}
+  .gloss-item{border:1.5px solid rgba(40,48,24,.28);border-radius:6px;background:rgba(255,255,255,.26);padding:7px}
+  .gloss-item b{display:block;font-family:"Space Mono",monospace;font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:#283018}
+  .gloss-item span{display:block;font-size:11px;color:#283018;margin-top:2px}
   footer{text-align:center;margin-top:18px;font-family:"Space Mono",monospace;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
-  @media (max-width:980px){.workspace{grid-template-columns:1fr}.transport{grid-template-columns:repeat(2,1fr)}.control{grid-column:auto}.slot-grid{grid-template-columns:repeat(4,1fr)}}
+  @media (max-width:980px){.workspace{grid-template-columns:1fr}.transport{grid-template-columns:repeat(2,1fr)}.control{grid-column:auto}.slot-grid{grid-template-columns:repeat(4,1fr)}.guide-panel .main-body{max-height:none;overflow:visible}}
   @media (max-width:560px){.slot-grid{grid-template-columns:repeat(2,1fr)}.pad-grid{grid-template-columns:repeat(4,1fr)}.steps{gap:3px}.ruler{gap:3px}.seq-row{grid-template-columns:minmax(64px,.9fr) repeat(16,minmax(0,1fr))}.seq-row-label{padding:4px 5px}.seq-cell{min-height:34px}.seq-step-num{font-size:8px}.lesson-layout{grid-template-columns:1fr}.gloss-grid{grid-template-columns:1fr}.transport{grid-template-columns:1fr 1fr}.brand{flex-direction:column;gap:4px}.nav{align-items:flex-start}.key{min-height:68px}}
 </style>
 </head>
@@ -181,23 +187,6 @@
     <div class="control"><label for="bpm">BPM <output id="bpmOut">92</output></label><input id="bpm" type="range" min="60" max="180" value="92"></div>
     <div class="control"><label for="swing">Swing <output id="swingOut">8</output></label><input id="swing" type="range" min="0" max="60" value="8"></div>
     <div class="control"><label for="volume">Volume <output id="volumeOut">90</output></label><input id="volume" type="range" min="0" max="100" value="90"></div>
-  </section>
-
-  <section class="panel lessons-panel" id="learnSection">
-    <div class="panel-head"><h2>Beat Lessons</h2><span class="tiny">recipes + why</span></div>
-    <div class="main-body">
-      <div class="lesson-layout">
-        <div class="lesson-list" id="lessonList"></div>
-        <div class="lesson-detail">
-          <div class="lesson-kicker" id="lessonKicker"></div>
-          <h3 id="lessonTitle"></h3>
-          <p class="lesson-copy" id="lessonCopy"></p>
-          <ol class="lesson-steps" id="lessonSteps"></ol>
-          <div class="gloss-grid" id="lessonWhy"></div>
-          <div class="lesson-actions" id="lessonActions"></div>
-        </div>
-      </div>
-    </div>
   </section>
 
   <div class="workspace">
@@ -277,9 +266,28 @@
 
     </main>
 
-    <aside class="panel">
-      <div class="panel-head"><h2>Sound Editor</h2><span class="tiny" id="editorMode">Drum</span></div>
-      <div class="editor-body" id="editorBody"></div>
+    <aside class="side-stack">
+      <section class="panel">
+        <div class="panel-head"><h2>Sound Editor</h2><span class="tiny" id="editorMode">Drum</span></div>
+        <div class="editor-body" id="editorBody"></div>
+      </section>
+
+      <section class="panel guide-panel" id="learnSection">
+        <div class="panel-head"><h2>Beat Guide</h2><span class="tiny">recipes + why</span></div>
+        <div class="main-body">
+          <div class="lesson-layout">
+            <div class="lesson-list" id="lessonList"></div>
+            <div class="lesson-detail">
+              <div class="lesson-kicker" id="lessonKicker"></div>
+              <h3 id="lessonTitle"></h3>
+              <p class="lesson-copy" id="lessonCopy"></p>
+              <ol class="lesson-steps" id="lessonSteps"></ol>
+              <div class="gloss-grid" id="lessonWhy"></div>
+              <div class="lesson-actions" id="lessonActions"></div>
+            </div>
+          </div>
+        </div>
+      </section>
     </aside>
   </div>
 
