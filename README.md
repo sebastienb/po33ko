@@ -1,21 +1,18 @@
-# PO-33 KO Trainer
+# Sampler Lab
 
-A portable, browser-based trainer for learning PO-33-style sampling, beatmaking,
-sequencing, pattern chaining, and punch-in effects.
+A portable browser sampler for beatmaking, sampling, sequencing, pattern
+chaining, melodic playing, and live effects.
 
-Open the trainer:
+Open the app:
 
-- `po33-primer.html` — guided lessons
-- `po33-studio.html` — playable practice studio
-
-Official PO-33 guide:
-https://teenage.engineering/guides/po-33/en
+- `po33-studio.html` - playable sampler workspace
+- `po33-primer.html` - legacy guided lessons
 
 ## iPhone
 
 Deploy over HTTPS, then open the site in Safari and choose **Share > Add to Home
-Screen**. The app includes a web manifest and service worker so the lessons and
-studio can be cached after first load.
+Screen**. The app includes a web manifest and service worker so the sampler can
+be cached after first load.
 
 Mic recording works best from an HTTPS URL because browser audio recording APIs
 require a secure context.
