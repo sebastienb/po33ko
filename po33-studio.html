@@ -84,7 +84,9 @@
   .step-cell,
   .chain-cell,
   .lesson,
-  .recipe-card {
+  .recipe-card,
+  .track-toggle,
+  .track-preview {
     -webkit-tap-highlight-color: transparent;
     -webkit-user-select: none;
     user-select: none;
@@ -213,6 +215,10 @@
     grid-template-columns: minmax(0, 1.7fr) minmax(330px, 0.8fr);
     gap: var(--space-lg);
     align-items: start;
+    min-width: 0;
+  }
+
+  .primary-flow {
     min-width: 0;
   }
 
@@ -408,7 +414,7 @@
 
   .track-label {
     display: grid;
-    grid-template-columns: 8px minmax(0, 1fr);
+    grid-template-columns: 18px minmax(0, 1fr);
     gap: var(--space-sm);
     align-items: center;
     padding: var(--space-sm) var(--space-md);
@@ -417,8 +423,32 @@
     background: var(--surface);
     color: var(--text-primary);
     text-align: left;
-    cursor: pointer;
     touch-action: manipulation;
+  }
+
+  .track-toggle,
+  .track-preview {
+    min-width: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+  }
+
+  .track-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    min-height: 30px;
+    padding: 0;
+    border-radius: 999px;
+  }
+
+  .track-preview {
+    display: block;
+    padding: 0;
   }
 
   .track-label.muted {
@@ -430,13 +460,17 @@
     color: var(--text-disabled);
   }
 
-  .track-label:hover,
-  .track-label:focus-visible {
+  .track-toggle:hover,
+  .track-toggle:focus-visible,
+  .track-preview:hover,
+  .track-preview:focus-visible {
     outline: 2px solid var(--border-visible);
     outline-offset: -2px;
   }
 
   .track-state-dot {
+    display: block;
+    flex: none;
     width: 7px;
     height: 7px;
     border-radius: 999px;
@@ -448,6 +482,7 @@
   }
 
   .track-name {
+    display: block;
     color: var(--text-display);
     font-size: 14px;
     font-weight: 500;
@@ -455,6 +490,7 @@
   }
 
   .track-meta {
+    display: block;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -532,8 +568,16 @@
 
   .teacher-stack {
     display: grid;
+    position: sticky;
+    top: var(--space-md);
+    align-self: start;
+    height: calc(100svh - (var(--space-md) * 2));
     min-width: 0;
     gap: var(--space-lg);
+    overflow-y: auto;
+    padding-right: var(--space-xs);
+    scrollbar-color: var(--border-visible) transparent;
+    scrollbar-width: thin;
   }
 
   .teacher-panel {
@@ -739,7 +783,7 @@
 
   .recipes {
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--space-sm);
     margin-top: var(--space-lg);
   }
@@ -961,6 +1005,13 @@
       grid-template-columns: 1fr;
     }
 
+    .teacher-stack {
+      position: static;
+      height: auto;
+      overflow: visible;
+      padding-right: 0;
+    }
+
     .meter-strip .metrics {
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
@@ -1109,7 +1160,8 @@
   </header>
 
   <main class="lab">
-    <section class="stage" aria-label="Playable beat grid">
+    <div class="primary-flow">
+      <section class="stage" aria-label="Playable beat grid">
       <div class="transport">
         <button class="button primary" id="playBtn" type="button">Play</button>
         <button class="button" id="songModeBtn" type="button" aria-pressed="false">Loop Bar</button>
@@ -1169,7 +1221,51 @@
       </aside>
 
       <div class="status-line" id="statusLine">[READY] Pick a recipe or press play. The grid is your loop.</div>
-    </section>
+      </section>
+
+      <section class="recipes" id="recipes" aria-label="Genre recipes"></section>
+
+      <section class="bottom-grid">
+        <div>
+          <section class="variation-panel" aria-label="Variation tools">
+            <div class="panel-head">
+              <h2>Variation Lab</h2>
+              <span class="small">Change one thing</span>
+            </div>
+            <div class="variation-grid" id="variationGrid"></div>
+          </section>
+
+          <section class="arrange-panel" aria-label="Song arranger">
+            <div class="panel-head">
+              <h2>8-Bar Song Chain</h2>
+              <span class="small" id="barLabel">Bar 1</span>
+            </div>
+            <p class="chain-note">This is the order Song Mode plays. Click any bar to cycle Intro, Main, Variation, Fill, or Drop.</p>
+            <div class="chain" id="chain"></div>
+            <div class="inline-actions">
+              <button class="button" id="makeSongBtn" type="button">Auto Chain</button>
+              <button class="button" id="copyMainBtn" type="button">Copy Main Here</button>
+            </div>
+          </section>
+        </div>
+
+        <section class="teacher-panel" aria-label="Beat notes">
+          <div class="panel-head">
+            <h2>What To Listen For</h2>
+            <span class="small" id="sectionName">Main</span>
+          </div>
+          <div class="why">
+            <div class="label">Current move</div>
+            <p id="moveText">Boom bap starts with drums that feel sampled: steady snare, swung hats, and kicks that answer the pocket.</p>
+          </div>
+          <div class="why">
+            <div class="label">Newbie rule</div>
+            <p id="ruleText">Do not fill every step. The empty steps create the bounce you actually feel.</p>
+          </div>
+          <p class="footer-note">Installed design skill: dominikmartn/nothing-design-skill. Fonts: Doto, Space Grotesk, Space Mono.</p>
+        </section>
+      </section>
+    </div>
 
     <div class="teacher-stack">
       <aside class="teacher-panel" aria-label="Guided lessons">
@@ -1204,49 +1300,6 @@
       </aside>
     </div>
   </main>
-
-  <section class="recipes" id="recipes" aria-label="Genre recipes"></section>
-
-  <section class="bottom-grid">
-    <div>
-      <section class="variation-panel" aria-label="Variation tools">
-        <div class="panel-head">
-          <h2>Variation Lab</h2>
-          <span class="small">Change one thing</span>
-        </div>
-        <div class="variation-grid" id="variationGrid"></div>
-      </section>
-
-      <section class="arrange-panel" aria-label="Song arranger">
-        <div class="panel-head">
-          <h2>8-Bar Song Chain</h2>
-          <span class="small" id="barLabel">Bar 1</span>
-        </div>
-        <p class="chain-note">This is the order Song Mode plays. Click any bar to cycle Intro, Main, Variation, Fill, or Drop.</p>
-        <div class="chain" id="chain"></div>
-        <div class="inline-actions">
-          <button class="button" id="makeSongBtn" type="button">Auto Chain</button>
-          <button class="button" id="copyMainBtn" type="button">Copy Main Here</button>
-        </div>
-      </section>
-    </div>
-
-    <section class="teacher-panel" aria-label="Beat notes">
-      <div class="panel-head">
-        <h2>What To Listen For</h2>
-        <span class="small" id="sectionName">Main</span>
-      </div>
-      <div class="why">
-        <div class="label">Current move</div>
-        <p id="moveText">Boom bap starts with drums that feel sampled: steady snare, swung hats, and kicks that answer the pocket.</p>
-      </div>
-      <div class="why">
-        <div class="label">Newbie rule</div>
-        <p id="ruleText">Do not fill every step. The empty steps create the bounce you actually feel.</p>
-      </div>
-      <p class="footer-note">Installed design skill: dominikmartn/nothing-design-skill. Fonts: Doto, Space Grotesk, Space Mono.</p>
-    </section>
-  </section>
 </div>
 
 <script>
@@ -1810,19 +1863,21 @@ function renderGrid() {
 
   tracks.forEach((track) => {
     const trackOn = state.trackOn[track.id];
-    const label = document.createElement("button");
-    label.type = "button";
+    const label = document.createElement("div");
     label.className = `track-label${trackOn ? "" : " muted"}`;
-    label.setAttribute("aria-pressed", String(trackOn));
-    label.setAttribute("aria-label", `${track.name} ${trackOn ? "on" : "off"}`);
+    label.setAttribute("role", "group");
+    label.setAttribute("aria-label", `${track.name} controls`);
     label.innerHTML = `
-      <span class="track-state-dot" aria-hidden="true"></span>
-      <span>
+      <button class="track-toggle" type="button" aria-pressed="${trackOn}" aria-label="${track.name} ${trackOn ? "on" : "off"}">
+        <span class="track-state-dot" aria-hidden="true"></span>
+      </button>
+      <button class="track-preview" type="button" aria-label="Preview ${track.name}">
         <span class="track-name">${track.name}</span>
         <span class="track-meta">${track.meta}</span>
-      </span>
+      </button>
     `;
-    label.addEventListener("click", () => toggleTrack(track.id));
+    label.querySelector(".track-toggle").addEventListener("click", () => toggleTrack(track.id));
+    label.querySelector(".track-preview").addEventListener("click", () => previewTrack(track.id));
     els.beatGrid.appendChild(label);
 
     for (let step = 0; step < 16; step += 1) {
@@ -2172,6 +2227,28 @@ function toggleTrack(trackId) {
   renderGrid();
   renderMetrics();
   setStatus(`[TRACK] ${track.name} ${state.trackOn[trackId] ? "on" : "off"}. ${onCount} of ${tracks.length} layers audible.`);
+}
+
+function previewTrack(trackId) {
+  const track = tracks.find((item) => item.id === trackId);
+  const pattern = currentPattern();
+  const hits = pattern[trackId]
+    .map((velocity, step) => ({ step, velocity }))
+    .filter((hit) => hit.velocity);
+
+  if (!hits.length) {
+    setStatus(`[PREVIEW] ${track.name} has no notes in ${sectionLabels[state.section]}.`);
+    return;
+  }
+
+  const ctx = ensureAudio();
+  const stepSeconds = 60 / state.bpm / 4;
+  const startTime = ctx.currentTime + 0.04;
+  hits.forEach(({ step, velocity }) => {
+    const swingDelay = step % 2 ? ((state.swing - 50) / 50) * stepSeconds * 0.6 : 0;
+    playVoice(trackId, startTime + step * stepSeconds + swingDelay, velocity, step);
+  });
+  setStatus(`[PREVIEW] ${track.name}: ${hits.length} note${hits.length === 1 ? "" : "s"} in ${sectionLabels[state.section]}. Dot controls on/off.`);
 }
 
 function simplify(pattern) {
